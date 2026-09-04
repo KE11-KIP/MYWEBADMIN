@@ -1,0 +1,1818 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-950 text-slate-100">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>STAN LANGUAGES CENTER - Admin Command Portal</title>
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome 6 CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f7ff',
+                            100: '#e0effe',
+                            500: '#0284c7',
+                            600: '#026597',
+                            800: '#002244',
+                            900: '#001a33',
+                        },
+                        amberAccent: {
+                            400: '#fbbf24',
+                            500: '#ff9800',
+                            600: '#e68a00',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #090d16;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body class="h-full font-sans antialiased bg-slate-950 text-slate-100 flex flex-col overflow-x-hidden">
+
+    <!-- Universal Modal UI -->
+    <div id="modalOverlay" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[200] hidden items-center justify-center p-4 transition-all duration-300">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl max-w-lg w-full p-6 relative transform transition-all scale-95" id="modalCard">
+            <div id="modalHeader" class="flex items-center space-x-3 mb-4">
+                <div id="modalIcon" class="w-10 h-10 rounded-xl bg-brand-500/20 text-brand-500 flex items-center justify-center text-xl shrink-0">
+                    <i class="fa-solid fa-circle-info"></i>
+                </div>
+                <h3 id="modalTitle" class="text-xl font-bold text-white">System Message</h3>
+            </div>
+            <div id="modalBody" class="text-slate-300 mb-6 text-sm leading-relaxed">Notification content goes here...</div>
+            <div id="modalActionContainer" class="flex justify-end space-x-3">
+                <button type="button" onclick="closeModal()" class="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm font-semibold rounded-xl transition-all">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quote Details / Action Modal -->
+    <div id="quoteModalOverlay" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[190] hidden items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 sm:p-8 relative">
+            <button onclick="closeQuoteModal()" class="absolute top-6 right-6 text-slate-400 hover:text-white text-lg">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div class="flex items-center space-x-3 mb-6">
+                <span class="w-10 h-10 rounded-xl bg-amberAccent-500/20 text-amberAccent-500 flex items-center justify-center text-lg">
+                    <i class="fa-solid fa-file-invoice"></i>
+                </span>
+                <div>
+                    <h3 class="text-xl font-extrabold text-white" id="modalQuoteRef">Quote #SL-2026-000</h3>
+                    <p class="text-xs text-slate-400">Detailed Quote Breakdown & Client Request</p>
+                </div>
+            </div>
+
+            <div id="quoteModalContent" class="space-y-6 text-sm">
+                <!-- Dynamic Content Populated by JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Quote Analysis Assistant Modal -->
+    <div id="aiModalOverlay" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[195] hidden items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl max-w-xl w-full p-6 sm:p-8 relative">
+            <button onclick="closeAiModal()" class="absolute top-6 right-6 text-slate-400 hover:text-white text-lg">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div class="flex items-center space-x-3 mb-6">
+                <div class="w-10 h-10 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center text-lg">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                </div>
+                <div>
+                    <h3 class="text-xl font-extrabold text-white">AI Language Analysis & Estimator</h3>
+                    <p class="text-xs text-slate-400">Powered by Gemini AI Engine</p>
+                </div>
+            </div>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Paste Sample Text or Document Excerpt</label>
+                    <textarea id="aiInputText" rows="4" placeholder="Paste source text here (e.g., Legal agreement, Medical record, Technical manual)..." class="w-full p-3 bg-slate-800/90 border border-slate-700 rounded-xl text-slate-100 text-xs focus:outline-none focus:border-amberAccent-500"></textarea>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Target Language</label>
+                        <select id="aiTargetLang" class="w-full p-2.5 bg-slate-800 border border-slate-700 rounded-xl text-slate-200 text-xs focus:outline-none">
+                            <option value="Kiswahili">Kiswahili</option>
+                            <option value="French">French</option>
+                            <option value="German">German</option>
+                            <option value="Arabic">Arabic</option>
+                            <option value="Spanish">Spanish</option>
+                            <option value="Somali">Somali</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Domain</label>
+                        <select id="aiDomain" class="w-full p-2.5 bg-slate-800 border border-slate-700 rounded-xl text-slate-200 text-xs focus:outline-none">
+                            <option value="General">General / Administrative</option>
+                            <option value="Legal">Legal / Official Certificate</option>
+                            <option value="Medical">Medical / Healthcare</option>
+                            <option value="Technical">Technical / IT</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button onclick="runAiAnalysis()" id="btnRunAi" class="w-full py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold rounded-xl text-xs flex items-center justify-center space-x-2 shadow-lg shadow-purple-500/20">
+                    <i class="fa-solid fa-sparkles"></i>
+                    <span>Analyze Complexity & Estimate Turnaround</span>
+                </button>
+
+                <div id="aiResultBox" class="hidden p-4 bg-slate-950 border border-slate-800 rounded-2xl text-xs space-y-2 text-slate-300">
+                    <h4 class="font-bold text-amberAccent-400 flex items-center"><i class="fa-solid fa-brain mr-2"></i> Gemini AI Assessment:</h4>
+                    <p id="aiOutputText" class="leading-relaxed whitespace-pre-line"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Linguist Modal -->
+    <div id="addLinguistModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[190] hidden items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl max-w-md w-full p-6 sm:p-8 relative">
+            <button onclick="closeLinguistModal()" class="absolute top-6 right-6 text-slate-400 hover:text-white text-lg">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div class="flex items-center space-x-3 mb-6">
+                <span class="w-10 h-10 rounded-xl bg-brand-500/20 text-brand-500 flex items-center justify-center text-lg">
+                    <i class="fa-solid fa-user-plus"></i>
+                </span>
+                <div>
+                    <h3 class="text-xl font-extrabold text-white">Add New Linguist</h3>
+                    <p class="text-xs text-slate-400">Register certified translator or interpreter</p>
+                </div>
+            </div>
+
+            <form onsubmit="handleAddLinguist(event)" class="space-y-4 text-xs">
+                <div>
+                    <label class="block text-slate-400 font-bold mb-1 uppercase tracking-wider">Full Name</label>
+                    <input type="text" id="langName" required placeholder="e.g. Dr. Grace Wambui" class="w-full p-3 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 focus:outline-none focus:border-amberAccent-500">
+                </div>
+                <div>
+                    <label class="block text-slate-400 font-bold mb-1 uppercase tracking-wider">Primary Language Pair</label>
+                    <input type="text" id="langPair" required placeholder="e.g. English <-> Kiswahili" class="w-full p-3 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 focus:outline-none focus:border-amberAccent-500">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-slate-400 font-bold mb-1 uppercase tracking-wider">Specialization</label>
+                        <select id="langSpec" class="w-full p-3 bg-slate-800 border border-slate-700 rounded-xl text-slate-200 focus:outline-none">
+                            <option value="Legal & Sworn">Legal & Sworn</option>
+                            <option value="Medical & Clinical">Medical & Clinical</option>
+                            <option value="Technical & Engineering">Technical</option>
+                            <option value="General & Media">General Media</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-slate-400 font-bold mb-1 uppercase tracking-wider">Daily Capacity</label>
+                        <input type="text" id="langCap" required placeholder="e.g. 2,500 words" class="w-full p-3 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 focus:outline-none focus:border-amberAccent-500">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-slate-400 font-bold mb-1 uppercase tracking-wider">Email Address</label>
+                    <input type="email" id="langEmail" required placeholder="linguist@stanlanguages.com" class="w-full p-3 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 focus:outline-none focus:border-amberAccent-500">
+                </div>
+                <button type="submit" class="w-full py-3 bg-amberAccent-500 hover:bg-amber-500 text-slate-950 font-extrabold rounded-xl text-sm transition-all shadow-lg shadow-amberAccent-500/20">
+                    Save Linguist Record
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Authentication Lock Screen Overlay -->
+    <div id="authOverlay" class="fixed inset-0 bg-slate-950 z-[150] flex items-center justify-center p-4 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-slate-950 to-black">
+        <div class="max-w-xl w-full bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden">
+            <div class="absolute -top-12 -right-12 w-40 h-40 bg-brand-500/10 rounded-full blur-3xl pointer-events-none"></div>
+            <div class="text-center mb-6">
+                <div class="inline-flex items-center justify-center w-14 h-14 bg-brand-500/10 border border-brand-500/20 rounded-2xl mb-3 text-amberAccent-500 text-2xl shadow-inner">
+                    <i class="fa-solid fa-shield-halved"></i>
+                </div>
+                <h1 class="text-2xl font-extrabold tracking-tight text-white">STAN <span class="text-amberAccent-500">LANGUAGES</span></h1>
+                <p class="text-xs text-slate-400 mt-1 uppercase tracking-widest font-semibold">Admin Command Portal • Password Security Enforced (8 Chars)</p>
+            </div>
+
+            <!-- Quick Profile Selection Grid -->
+            <div class="mb-6">
+                <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">Select Admin Profile to Auto-Fill</label>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5" id="loginAdminQuickGrid">
+                    <!-- Populated dynamically via JS -->
+                </div>
+            </div>
+
+            <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Admin Email / ID</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-envelope"></i></span>
+                        <input type="email" id="adminEmail" required value="stanley@stanlanguages.com" class="w-full pl-10 pr-4 py-2.5 bg-slate-800/80 border border-slate-700 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-amberAccent-500 text-sm">
+                    </div>
+                </div>
+
+                <div>
+                    <div class="flex items-center justify-between mb-1.5">
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-400">Security Password</label>
+                        <span class="text-[10px] text-amberAccent-400 font-semibold"><i class="fa-solid fa-key text-[9px] mr-1"></i>Rule: Exactly 8 Chars</span>
+                    </div>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-lock"></i></span>
+                        <input type="password" id="adminPass" required minlength="8" maxlength="8" value="9992442@" oninput="validatePasswordInput(this)" class="w-full pl-10 pr-10 py-2.5 bg-slate-800/80 border border-slate-700 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-amberAccent-500 text-sm font-mono tracking-wider">
+                        <button type="button" onclick="togglePasswordVisibility()" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-200">
+                            <i id="passVisibilityIcon" class="fa-solid fa-eye text-xs"></i>
+                        </button>
+                    </div>
+                    <div id="passLengthHint" class="flex items-center justify-between text-[11px] text-emerald-400 mt-1">
+                        <span><i class="fa-solid fa-check-circle mr-1"></i> Password length rule met (8/8 characters)</span>
+                        <span id="passCharCount" class="font-mono">8/8</span>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between text-xs text-slate-400 pt-1">
+                    <label class="flex items-center space-x-2 cursor-pointer">
+                        <input type="checkbox" checked class="rounded border-slate-700 bg-slate-800 text-amberAccent-500 focus:ring-0">
+                        <span>Remember active session</span>
+                    </label>
+                    <span class="text-amberAccent-500 hover:underline cursor-pointer" onclick="showModal('Password Credentials', 'Managing Director: stanley@stanlanguages.com\nPassword: 9992442@ (8 characters)\n\nRules: Passwords must be exactly 8 characters.', 'info')">Password Help?</span>
+                </div>
+
+                <button type="submit" id="loginSubmitBtn" class="w-full py-3 bg-gradient-to-r from-amberAccent-500 to-amber-600 hover:from-amber-500 hover:to-amber-500 text-slate-950 font-bold rounded-xl shadow-lg shadow-amberAccent-500/20 transition-all flex items-center justify-center space-x-2">
+                    <i class="fa-solid fa-right-to-bracket"></i>
+                    <span>Authenticate Selected Admin</span>
+                </button>
+            </form>
+
+            <div class="mt-5 pt-4 border-t border-slate-800 text-center text-xs text-slate-500">
+                <p><i class="fa-solid fa-lock mr-1"></i> 256-Bit Encrypted Portal Access • 8-Character Key Security Active</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App Layout Shell -->
+    <div id="adminShell" class="flex h-screen overflow-hidden">
+
+        <!-- Mobile Drawer Navigation Overlay -->
+        <div id="mobileBackdrop" onclick="toggleMobileSidebar()" class="fixed inset-0 bg-slate-950/80 z-40 hidden md:hidden"></div>
+
+        <!-- Sidebar Navigation -->
+        <aside id="sidebarNav" class="w-64 bg-slate-900 border-r border-slate-800 flex flex-col justify-between shrink-0 fixed md:static inset-y-0 left-0 z-50 transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out">
+            <div>
+                <!-- Brand Header -->
+                <div class="h-20 px-6 flex items-center justify-between border-b border-slate-800/80">
+                    <a href="#" class="flex items-center space-x-3">
+                        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-amberAccent-500 to-amber-600 flex items-center justify-center text-slate-950 font-black shadow-md">
+                            SL
+                        </div>
+                        <div>
+                            <span class="font-extrabold tracking-tight text-white text-base">STAN <span class="text-amberAccent-500">ADMIN</span></span>
+                            <span class="block text-[10px] text-slate-400 font-semibold tracking-widest uppercase">Language Center</span>
+                        </div>
+                    </a>
+                    <button onclick="toggleMobileSidebar()" class="md:hidden text-slate-400 hover:text-white">
+                        <i class="fa-solid fa-xmark text-lg"></i>
+                    </button>
+                </div>
+
+                <!-- Navigation Links -->
+                <nav class="p-4 space-y-1.5">
+                    <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-item w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-amberAccent-500 bg-amberAccent-500/10 font-semibold text-sm transition-all">
+                        <i class="fa-solid fa-chart-pie w-5 text-center"></i>
+                        <span>Dashboard Overview</span>
+                    </button>
+
+                    <button onclick="switchTab('quotes')" id="nav-quotes" class="nav-item w-full flex items-center justify-between px-4 py-3 rounded-xl text-slate-400 hover:bg-slate-800/60 hover:text-slate-200 font-medium text-sm transition-all">
+                        <div class="flex items-center space-x-3">
+                            <i class="fa-solid fa-file-invoice-dollar w-5 text-center"></i>
+                            <span>Quote Requests</span>
+                        </div>
+                        <span id="pendingBadgeCount" class="px-2 py-0.5 text-xs font-bold bg-amberAccent-500 text-slate-950 rounded-full">0</span>
+                    </button>
+
+                    <button onclick="switchTab('admins')" id="nav-admins" class="nav-item w-full flex items-center justify-between px-4 py-3 rounded-xl text-slate-400 hover:bg-slate-800/60 hover:text-slate-200 font-medium text-sm transition-all">
+                        <div class="flex items-center space-x-3">
+                            <i class="fa-solid fa-user-shield w-5 text-center"></i>
+                            <span>Admin Profiles</span>
+                        </div>
+                        <span class="px-2 py-0.5 text-[10px] font-bold bg-brand-500/20 text-brand-400 rounded-full">4</span>
+                    </button>
+
+                    <button onclick="switchTab('translators')" id="nav-translators" class="nav-item w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-slate-800/60 hover:text-slate-200 font-medium text-sm transition-all">
+                        <i class="fa-solid fa-user-gear w-5 text-center"></i>
+                        <span>Linguists & Staff</span>
+                    </button>
+
+                    <button onclick="switchTab('pricing')" id="nav-pricing" class="nav-item w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-slate-800/60 hover:text-slate-200 font-medium text-sm transition-all">
+                        <i class="fa-solid fa-calculator w-5 text-center"></i>
+                        <span>Rates & Matrix</span>
+                    </button>
+
+                    <button onclick="switchTab('settings')" id="nav-settings" class="nav-item w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-slate-800/60 hover:text-slate-200 font-medium text-sm transition-all">
+                        <i class="fa-solid fa-sliders w-5 text-center"></i>
+                        <span>Database & Settings</span>
+                    </button>
+                </nav>
+            </div>
+
+            <!-- AI Quick Action Banner -->
+            <div class="p-4 space-y-3">
+                <div class="p-3.5 bg-gradient-to-br from-purple-900/40 to-slate-900 border border-purple-500/30 rounded-2xl">
+                    <div class="flex items-center space-x-2 text-xs font-bold text-purple-300 mb-1">
+                        <i class="fa-solid fa-wand-magic-sparkles text-amberAccent-400"></i>
+                        <span>AI Assistant</span>
+                    </div>
+                    <p class="text-[11px] text-slate-400 mb-2">Estimate turnaround & document difficulty.</p>
+                    <button onclick="openAiModal()" class="w-full py-1.5 bg-purple-600 hover:bg-purple-500 text-white rounded-lg text-xs font-bold transition-all flex items-center justify-center space-x-1">
+                        <span>Launch Assistant</span>
+                    </button>
+                </div>
+
+                <!-- Sidebar Footer / User Profile -->
+                <div class="bg-slate-950/80 rounded-xl p-3 flex items-center justify-between border border-slate-800" id="sidebarUserProfile">
+                    <!-- Populated dynamically via JS -->
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Body Workspace -->
+        <div class="flex-1 flex flex-col min-w-0 overflow-hidden bg-slate-950">
+
+            <!-- Top Header Bar -->
+            <header class="h-20 bg-slate-900 border-b border-slate-800 px-4 sm:px-8 flex items-center justify-between shrink-0">
+                <div class="flex items-center space-x-4">
+                    <!-- Mobile Hamburger -->
+                    <button onclick="toggleMobileSidebar()" class="md:hidden text-slate-400 hover:text-white p-2 rounded-lg bg-slate-800">
+                        <i class="fa-solid fa-bars text-lg"></i>
+                    </button>
+                    <div>
+                        <h2 id="pageTitle" class="text-lg sm:text-xl font-bold text-white">Dashboard Overview</h2>
+                        <p class="text-xs text-slate-400 hidden sm:block">Real-time quote tracking, linguist management, and translation operations.</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center space-x-3 sm:space-x-4">
+                    <!-- Quick Search Input -->
+                    <div class="relative hidden sm:block">
+                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500"><i class="fa-solid fa-magnifying-glass text-xs"></i></span>
+                        <input type="text" id="globalSearch" onkeyup="handleGlobalSearch()" placeholder="Search quotes, client name..." class="pl-9 pr-4 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-amberAccent-500 w-48 lg:w-64">
+                    </div>
+
+                    <!-- Sync Status Indicator -->
+                    <div id="syncStatusBadge" class="hidden sm:flex items-center space-x-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold">
+                        <i class="fa-solid fa-database"></i>
+                        <span id="syncText">8-Char Security Active</span>
+                    </div>
+
+                    <!-- WhatsApp Quick Launch -->
+                    <a href="https://wa.me/254799924460" target="_blank" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all flex items-center space-x-2 shadow-sm">
+                        <i class="fa-brands fa-whatsapp text-sm"></i>
+                        <span class="hidden sm:inline">WhatsApp Line</span>
+                    </a>
+                </div>
+            </header>
+
+            <!-- Main Content Area -->
+            <main class="flex-1 overflow-y-auto p-4 sm:p-8 space-y-8">
+
+                <!-- VIEW 1: DASHBOARD OVERVIEW -->
+                <section id="view-dashboard" class="tab-content active space-y-8">
+                    <!-- Stat Metric Cards -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm">
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Quote Requests</span>
+                                <div class="w-9 h-9 rounded-xl bg-brand-500/10 text-brand-500 flex items-center justify-center">
+                                    <i class="fa-solid fa-file-lines"></i>
+                                </div>
+                            </div>
+                            <div class="flex items-baseline justify-between">
+                                <span id="statTotalQuotes" class="text-2xl sm:text-3xl font-extrabold text-white">0</span>
+                                <span class="text-xs text-emerald-400 font-semibold"><i class="fa-solid fa-arrow-trend-up mr-1"></i> Active</span>
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm">
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Pending Review</span>
+                                <div class="w-9 h-9 rounded-xl bg-amberAccent-500/10 text-amberAccent-500 flex items-center justify-center">
+                                    <i class="fa-solid fa-clock"></i>
+                                </div>
+                            </div>
+                            <div class="flex items-baseline justify-between">
+                                <span id="statPendingQuotes" class="text-2xl sm:text-3xl font-extrabold text-amberAccent-500">0</span>
+                                <span class="text-xs text-amber-400 font-semibold">Action Required</span>
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm">
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Completed Projects</span>
+                                <div class="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
+                                    <i class="fa-solid fa-circle-check"></i>
+                                </div>
+                            </div>
+                            <div class="flex items-baseline justify-between">
+                                <span id="statCompletedQuotes" class="text-2xl sm:text-3xl font-extrabold text-white">0</span>
+                                <span class="text-xs text-slate-400 font-semibold">Delivered</span>
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm">
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Pipeline Revenue</span>
+                                <div class="w-9 h-9 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center">
+                                    <i class="fa-solid fa-coins"></i>
+                                </div>
+                            </div>
+                            <div class="flex items-baseline justify-between">
+                                <span id="statEstimatedVal" class="text-2xl sm:text-3xl font-extrabold text-white">KES 0</span>
+                                <span class="text-xs text-purple-400 font-semibold">Total Value</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Charts & Languages Breakdown Grid -->
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <!-- Chart Card -->
+                        <div class="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl p-6">
+                            <div class="flex items-center justify-between mb-6">
+                                <div>
+                                    <h3 class="font-bold text-white text-base">Translation Volumes & Revenue Trend</h3>
+                                    <p class="text-xs text-slate-400">Monthly quote distributions across Kiswahili & international languages.</p>
+                                </div>
+                                <span class="text-xs font-semibold px-3 py-1 bg-slate-800 text-slate-300 rounded-lg">2026 YTD</span>
+                            </div>
+                            <div class="h-64">
+                                <canvas id="volumeChart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Languages Breakdown -->
+                        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col justify-between">
+                            <div>
+                                <h3 class="font-bold text-white text-base mb-1">Top Language Pairs</h3>
+                                <p class="text-xs text-slate-400 mb-6">Distribution by submitted client projects.</p>
+
+                                <div class="space-y-4 text-xs font-semibold">
+                                    <div>
+                                        <div class="flex justify-between text-slate-300 mb-1">
+                                            <span>English → Kiswahili</span>
+                                            <span class="text-amberAccent-500">42%</span>
+                                        </div>
+                                        <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+                                            <div class="bg-amberAccent-500 h-full rounded-full" style="width: 42%"></div>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <div class="flex justify-between text-slate-300 mb-1">
+                                            <span>English → French</span>
+                                            <span class="text-brand-500">28%</span>
+                                        </div>
+                                        <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+                                            <div class="bg-brand-500 h-full rounded-full" style="width: 28%"></div>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <div class="flex justify-between text-slate-300 mb-1">
+                                            <span>English → German / Spanish</span>
+                                            <span class="text-purple-400">18%</span>
+                                        </div>
+                                        <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+                                            <div class="bg-purple-500 h-full rounded-full" style="width: 18%"></div>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <div class="flex justify-between text-slate-300 mb-1">
+                                            <span>Arabic / Somali / Regional</span>
+                                            <span class="text-emerald-400">12%</span>
+                                        </div>
+                                        <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+                                            <div class="bg-emerald-500 h-full rounded-full" style="width: 12%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mt-6 pt-4 border-t border-slate-800 text-xs text-slate-400 flex items-center justify-between">
+                                <span>Certified Seal Orders: <strong class="text-white">68%</strong></span>
+                                <span class="text-amberAccent-500 hover:underline cursor-pointer" onclick="switchTab('quotes')">View All Quotes →</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Pending Quotes Dashboard Table -->
+                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <h3 class="font-bold text-white text-base">Action Items: Recent Pending Quotes</h3>
+                                <p class="text-xs text-slate-400">Quotes awaiting cost estimation or linguist assignment.</p>
+                            </div>
+                            <button onclick="switchTab('quotes')" class="text-xs font-semibold text-amberAccent-500 hover:text-amber-400">
+                                View Full Directory (<span id="dashboardPendingCount">0</span>)
+                            </button>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs text-slate-300">
+                                <thead class="bg-slate-950/60 uppercase text-[10px] text-slate-400 font-bold tracking-wider border-b border-slate-800">
+                                    <tr>
+                                        <th class="p-3">Ref ID</th>
+                                        <th class="p-3">Client Name</th>
+                                        <th class="p-3">Language Pair</th>
+                                        <th class="p-3">Doc Type</th>
+                                        <th class="p-3">Est. Price</th>
+                                        <th class="p-3">Status</th>
+                                        <th class="p-3 text-right">Quick Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="dashboardPendingTable" class="divide-y divide-slate-800/60 font-medium">
+                                    <!-- Populated dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- VIEW 2: QUOTE REQUESTS MANAGEMENT -->
+                <section id="view-quotes" class="tab-content space-y-6">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-900 border border-slate-800 p-5 rounded-2xl">
+                        <div>
+                            <h3 class="font-extrabold text-white text-lg flex items-center">
+                                <i class="fa-solid fa-file-invoice-dollar text-amberAccent-500 mr-2.5"></i>
+                                Client Quote Requests Directory
+                            </h3>
+                            <p class="text-xs text-slate-400 mt-1">Review incoming translation inquiries, update pricing, and assign certified linguists.</p>
+                        </div>
+
+                        <!-- Filter Status Tabs -->
+                        <div class="flex items-center space-x-1.5 bg-slate-950 p-1.5 rounded-xl border border-slate-800 text-xs">
+                            <button onclick="filterQuotes('ALL')" id="filterBtn-ALL" class="px-3 py-1.5 rounded-lg font-bold text-amberAccent-500 bg-amberAccent-500/10">All</button>
+                            <button onclick="filterQuotes('Pending')" id="filterBtn-Pending" class="px-3 py-1.5 rounded-lg font-bold text-slate-400 hover:text-white">Pending</button>
+                            <button onclick="filterQuotes('In Progress')" id="filterBtn-In Progress" class="px-3 py-1.5 rounded-lg font-bold text-slate-400 hover:text-white">In Progress</button>
+                            <button onclick="filterQuotes('Completed')" id="filterBtn-Completed" class="px-3 py-1.5 rounded-lg font-bold text-slate-400 hover:text-white">Completed</button>
+                        </div>
+                    </div>
+
+                    <!-- Full Quotes Table -->
+                    <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs text-slate-300">
+                                <thead class="bg-slate-950 uppercase text-[10px] text-slate-400 font-bold tracking-wider border-b border-slate-800">
+                                    <tr>
+                                        <th class="p-4">Ref ID</th>
+                                        <th class="p-4">Client / Org</th>
+                                        <th class="p-4">Pair</th>
+                                        <th class="p-4">Doc Type & Scope</th>
+                                        <th class="p-4">Quoted Fee</th>
+                                        <th class="p-4">Status</th>
+                                        <th class="p-4 text-center">Date</th>
+                                        <th class="p-4 text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="quotesTableBody" class="divide-y divide-slate-800/80 font-medium">
+                                    <!-- Populated dynamically via JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- VIEW 6: ADMIN PROFILES DIRECTORY & MANAGEMENT -->
+                <section id="view-admins" class="tab-content space-y-6">
+                    <div class="flex items-center justify-between bg-slate-900 border border-slate-800 p-5 rounded-2xl">
+                        <div>
+                            <h3 class="font-extrabold text-white text-lg flex items-center">
+                                <i class="fa-solid fa-user-shield text-amberAccent-500 mr-2.5"></i>
+                                Administrative Profiles & Access Roster
+                            </h3>
+                            <p class="text-xs text-slate-400 mt-1">Authorized portal administrators with full operational and management privileges. (Password length: Exactly 8 Chars)</p>
+                        </div>
+                        <button onclick="openSwitchAdminModal()" class="px-4 py-2.5 bg-gradient-to-r from-amberAccent-500 to-amber-600 hover:from-amber-500 hover:to-amber-500 text-slate-950 font-extrabold rounded-xl text-xs flex items-center space-x-2 shadow-lg shadow-amberAccent-500/20">
+                            <i class="fa-solid fa-repeat"></i>
+                            <span>Switch Active Admin</span>
+                        </button>
+                    </div>
+
+                    <!-- 4 Admins Profile Cards Grid -->
+                    <div id="adminsDirectoryGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <!-- Dynamic Admin Cards -->
+                    </div>
+
+                    <!-- Role Matrix Card -->
+                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+                        <h4 class="font-bold text-white text-sm mb-4 flex items-center">
+                            <i class="fa-solid fa-key text-brand-500 mr-2"></i>
+                            Admin Permission & Governance Matrix
+                        </h4>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs text-slate-300">
+                                <thead class="bg-slate-950 uppercase text-[10px] text-slate-400 font-bold tracking-wider border-b border-slate-800">
+                                    <tr>
+                                        <th class="p-3">Admin Account</th>
+                                        <th class="p-3">Role Designation</th>
+                                        <th class="p-3">Quote Approval</th>
+                                        <th class="p-3">Linguist Register</th>
+                                        <th class="p-3">Rates Control</th>
+                                        <th class="p-3">Database Reset</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-800 font-medium">
+                                    <tr>
+                                        <td class="p-3 text-white font-bold">Stanley Njuguna</td>
+                                        <td class="p-3 text-amberAccent-400 font-semibold">Managing Director</td>
+                                        <td class="p-3 text-emerald-400"><i class="fa-solid fa-circle-check mr-1"></i> Full</td>
+                                        <td class="p-3 text-emerald-400"><i class="fa-solid fa-circle-check mr-1"></i> Full</td>
+                                        <td class="p-3 text-emerald-400"><i class="fa-solid fa-circle-check mr-1"></i> Full</td>
+                                        <td class="p-3 text-emerald-400"><i class="fa-solid fa-circle-check mr-1"></i> Full</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-3 text-white font-bold">Dr. Grace Wambui</td>
+                                        <td class="p-3 text-brand-400 font-semibold">Chief Linguist Coordinator</td>
+                                        <td class="p-3 text-emerald-400"><i class="fa-solid fa-circle-check mr-1"></i> Full</td>
+                                        <td class="p-3 text-emerald-400"><i class="fa-solid fa-circle-check mr-1"></i> Lead</td>
+                                        <td class="p-3 text-slate-400"><i class="fa-solid fa-eye mr-1"></i> Read-Only</td>
+                                        <td class="p-3 text-rose-400"><i class="fa-solid fa-circle-xmark mr-1"></i> Restricted</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-3 text-white font-bold">David Ochieng</td>
+                                        <td class="p-3 text-emerald-400 font-semibold">Billing & Quotes Manager</td>
+                                        <td class="p-3 text-emerald-400"><i class="fa-solid fa-circle-check mr-1"></i> Lead</td>
+                                        <td class="p-3 text-emerald-400"><i class="fa-solid fa-circle-check mr-1"></i> Standard</td>
+                                        <td class="p-3 text-emerald-400"><i class="fa-solid fa-circle-check mr-1"></i> Lead</td>
+                                        <td class="p-3 text-rose-400"><i class="fa-solid fa-circle-xmark mr-1"></i> Restricted</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-3 text-white font-bold">Aminah Hassan</td>
+                                        <td class="p-3 text-purple-400 font-semibold">Quality Assurance & Support</td>
+                                        <td class="p-3 text-emerald-400"><i class="fa-solid fa-circle-check mr-1"></i> Reviewer</td>
+                                        <td class="p-3 text-emerald-400"><i class="fa-solid fa-circle-check mr-1"></i> Standard</td>
+                                        <td class="p-3 text-slate-400"><i class="fa-solid fa-eye mr-1"></i> Read-Only</td>
+                                        <td class="p-3 text-rose-400"><i class="fa-solid fa-circle-xmark mr-1"></i> Restricted</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- VIEW 3: LINGUISTS & STAFF ROSTER -->
+                <section id="view-translators" class="tab-content space-y-6">
+                    <div class="flex items-center justify-between bg-slate-900 border border-slate-800 p-4 rounded-2xl">
+                        <div>
+                            <h3 class="font-bold text-white text-base">Certified Linguists & Sworn Translators</h3>
+                            <p class="text-xs text-slate-400">Directory of internal and partner language specialists.</p>
+                        </div>
+                        <button onclick="openLinguistModal()" class="px-4 py-2.5 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl text-xs flex items-center space-x-2 shadow-md">
+                            <i class="fa-solid fa-user-plus"></i>
+                            <span>Register New Linguist</span>
+                        </button>
+                    </div>
+
+                    <!-- Linguist Cards Grid -->
+                    <div id="linguistCardsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <!-- Dynamic Linguist Cards -->
+                    </div>
+                </section>
+
+                <!-- VIEW 4: RATES & PRICING MATRIX -->
+                <section id="view-pricing" class="tab-content space-y-6">
+                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+                        <div class="flex items-center justify-between mb-6">
+                            <div>
+                                <h3 class="font-bold text-white text-base">Translation & Interpretation Rates Matrix</h3>
+                                <p class="text-xs text-slate-400">Configure default per-word and per-page rates for STAN Languages Center.</p>
+                            </div>
+                            <button onclick="saveRatesMatrix()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs flex items-center space-x-2">
+                                <i class="fa-solid fa-floppy-disk"></i>
+                                <span>Save Changes</span>
+                            </button>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs text-slate-300">
+                                <thead class="bg-slate-950 uppercase text-[10px] text-slate-400 font-bold tracking-wider border-b border-slate-800">
+                                    <tr>
+                                        <th class="p-4">Language Pair</th>
+                                        <th class="p-4">Standard Rate / Word (KES)</th>
+                                        <th class="p-4">Sworn Cert Page Rate (KES)</th>
+                                        <th class="p-4">Interpretation Rate / Hour (KES)</th>
+                                        <th class="p-4">Turnaround Standard</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="ratesTableBody" class="divide-y divide-slate-800">
+                                    <!-- Dynamic Rows -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+                            <h4 class="font-bold text-white text-sm mb-3"><i class="fa-solid fa-bolt text-amberAccent-500 mr-2"></i> Express Delivery Multipliers</h4>
+                            <div class="space-y-3 text-xs">
+                                <div class="flex items-center justify-between p-3 bg-slate-950 rounded-xl border border-slate-800">
+                                    <span>Same-Day Express (&lt; 12 hours)</span>
+                                    <span class="font-bold text-amberAccent-500">+ 50% Surcharge</span>
+                                </div>
+                                <div class="flex items-center justify-between p-3 bg-slate-950 rounded-xl border border-slate-800">
+                                    <span>Legal / Sworn Certification Seal</span>
+                                    <span class="font-bold text-amberAccent-500">KES 1,500 flat / document</span>
+                                </div>
+                                <div class="flex items-center justify-between p-3 bg-slate-950 rounded-xl border border-slate-800">
+                                    <span>Technical / Medical Specialization</span>
+                                    <span class="font-bold text-amberAccent-500">+ 25% Multiplier</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+                            <h4 class="font-bold text-white text-sm mb-3"><i class="fa-solid fa-calculator text-brand-500 mr-2"></i> Rate Testing Sandbox</h4>
+                            <div class="space-y-3 text-xs">
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="block text-slate-400 font-semibold mb-1">Word Count</label>
+                                        <input type="number" id="sandboxWords" value="1200" oninput="calculateSandbox()" class="w-full p-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white">
+                                    </div>
+                                    <div>
+                                        <label class="block text-slate-400 font-semibold mb-1">Language Pair</label>
+                                        <select id="sandboxPair" onchange="calculateSandbox()" class="w-full p-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white">
+                                            <option value="4.5">English → Kiswahili (4.5 KES/w)</option>
+                                            <option value="6.0">English → French (6.0 KES/w)</option>
+                                            <option value="7.5">English → German (7.5 KES/w)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="p-4 bg-slate-950 border border-amberAccent-500/30 rounded-xl flex items-center justify-between">
+                                    <span class="text-slate-400">Estimated Total Quote:</span>
+                                    <span id="sandboxOutput" class="text-lg font-extrabold text-amberAccent-500">KES 5,400</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- VIEW 5: DATABASE & SETTINGS -->
+                <section id="view-settings" class="tab-content space-y-6">
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <!-- Connection Status -->
+                        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+                            <div class="flex items-center space-x-3 mb-4">
+                                <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-lg">
+                                    <i class="fa-solid fa-server"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-white text-base">Storage Engine Status</h3>
+                                    <p class="text-xs text-slate-400">Local & Cloud Persistence</p>
+                                </div>
+                            </div>
+
+                            <div class="space-y-3 text-xs">
+                                <div class="flex items-center justify-between p-3 bg-slate-950 rounded-xl">
+                                    <span class="text-slate-400">Active Database:</span>
+                                    <span class="text-emerald-400 font-bold"><i class="fa-solid fa-circle text-[8px] mr-1"></i> LocalStorage Engine</span>
+                                </div>
+                                <div class="flex items-center justify-between p-3 bg-slate-950 rounded-xl">
+                                    <span class="text-slate-400">Cloud Sync Status:</span>
+                                    <span class="text-emerald-400 font-bold">Connected & Ready</span>
+                                </div>
+                                <div class="flex items-center justify-between p-3 bg-slate-950 rounded-xl">
+                                    <span class="text-slate-400">Stored Quotes:</span>
+                                    <span id="settingsQuoteCount" class="text-white font-bold">0 Records</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- System Controls -->
+                        <div class="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
+                            <h3 class="font-bold text-white text-base mb-2">Administrative Database Operations</h3>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <button onclick="seedInitialData()" class="p-4 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-2xl text-left transition-all group">
+                                    <div class="text-amberAccent-500 font-bold text-sm mb-1 group-hover:underline flex items-center justify-between">
+                                        <span>Reset to Sample Data</span>
+                                        <i class="fa-solid fa-rotate-left"></i>
+                                    </div>
+                                    <p class="text-xs text-slate-400">Restore factory sample quotes, linguists, and rate tables.</p>
+                                </button>
+
+                                <button onclick="exportFullDatabaseJSON()" class="p-4 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-2xl text-left transition-all group">
+                                    <div class="text-brand-500 font-bold text-sm mb-1 group-hover:underline flex items-center justify-between">
+                                        <span>Backup Database (JSON)</span>
+                                        <i class="fa-solid fa-download"></i>
+                                    </div>
+                                    <p class="text-xs text-slate-400">Download complete system state as encrypted JSON file.</p>
+                                </button>
+                            </div>
+
+                            <div class="pt-4 border-t border-slate-800">
+                                <h4 class="font-bold text-white text-xs uppercase tracking-wider mb-3">System Audit Logs</h4>
+                                <div id="auditLogsContainer" class="bg-slate-950 rounded-xl p-3 h-36 overflow-y-auto font-mono text-[11px] text-slate-400 space-y-1">
+                                    <!-- Dynamic logs -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+            </main>
+        </div>
+    </div>
+
+    <script>
+        // 4 Admin Profiles with strictly 8-character passwords
+        const DEFAULT_ADMINS = [
+            {
+                id: "ADM-001",
+                name: "Stanley Njuguna",
+                email: "stanley@stanlanguages.com",
+                password: "9992442@", // Exactly 8 characters
+                role: "Managing Director",
+                title: "Director & Lead Translator",
+                avatar: "SN",
+                bgGradient: "from-amber-500 to-amber-700",
+                badge: "Super Admin",
+                phone: "+254 799 924 460",
+                lastActive: "Just Now",
+                status: "Online"
+            },
+            {
+                id: "ADM-002",
+                name: "Dr. Grace Wambui",
+                email: "grace@stanlanguages.com",
+                password: "grace123", // Exactly 8 characters
+                role: "Chief Linguist Coordinator",
+                title: "Sworn Legal Specialist",
+                avatar: "GW",
+                bgGradient: "from-sky-500 to-blue-700",
+                badge: "Ops Admin",
+                phone: "+254 712 345 670",
+                lastActive: "10 mins ago",
+                status: "Online"
+            },
+            {
+                id: "ADM-003",
+                name: "David Ochieng",
+                email: "david@stanlanguages.com",
+                password: "david123", // Exactly 8 characters
+                role: "Billing & Quotes Manager",
+                title: "Financial Operations",
+                avatar: "DO",
+                bgGradient: "from-emerald-500 to-teal-700",
+                badge: "Finance Admin",
+                phone: "+254 722 987 654",
+                lastActive: "1 hour ago",
+                status: "Away"
+            },
+            {
+                id: "ADM-004",
+                name: "Aminah Hassan",
+                email: "aminah@stanlanguages.com",
+                password: "aminah12", // Exactly 8 characters
+                role: "Quality Assurance & Support",
+                title: "Medical & Clinical Lead",
+                avatar: "AH",
+                bgGradient: "from-purple-500 to-indigo-700",
+                badge: "QA Admin",
+                phone: "+254 733 456 789",
+                lastActive: "3 hours ago",
+                status: "Online"
+            }
+        ];
+
+        // Default Mock Initial Data Seed
+        const DEFAULT_QUOTES = [
+            {
+                id: "SL-2026-101",
+                clientName: "Safari Legal Consultants",
+                email: "legal@safariconsult.co.ke",
+                phone: "+254 712 345 678",
+                sourceLang: "English",
+                targetLang: "Kiswahili",
+                docType: "Sworn Legal Contract",
+                units: "3,400 Words",
+                wordCount: 3400,
+                price: 15300,
+                status: "Pending",
+                date: "2026-09-02",
+                notes: "Client requires official seal and stamp for court filing in Nairobi."
+            },
+            {
+                id: "SL-2026-102",
+                clientName: "Médecins Sans Frontières (MSF)",
+                email: "procurement@msf-eastafrica.org",
+                phone: "+254 720 998 811",
+                sourceLang: "English",
+                targetLang: "French",
+                docType: "Medical Research Guidelines",
+                units: "8,500 Words",
+                wordCount: 8500,
+                price: 51000,
+                status: "In Progress",
+                date: "2026-09-01",
+                notes: "High accuracy required for clinical terminology. Dr. Grace assigned."
+            },
+            {
+                id: "SL-2026-103",
+                clientName: "Embassy of Germany Nairobi",
+                email: "visa@nairobi.diplo.de",
+                phone: "+254 733 112 233",
+                sourceLang: "German",
+                targetLang: "English",
+                docType: "Academic Certificates & Transcripts",
+                units: "5 Pages",
+                wordCount: 1200,
+                price: 12500,
+                status: "Completed",
+                date: "2026-08-28",
+                notes: "Certified translation delivered via courier and digital copy."
+            },
+            {
+                id: "SL-2026-104",
+                clientName: "Kilima Energy Corp",
+                email: "info@kilimaenergy.com",
+                phone: "+254 799 001 122",
+                sourceLang: "English",
+                targetLang: "Spanish",
+                docType: "Environmental Impact Assessment",
+                units: "12,000 Words",
+                wordCount: 12000,
+                price: 78000,
+                status: "Pending",
+                date: "2026-09-04",
+                notes: "Urgent project. Needs completion in 48 hours."
+            }
+        ];
+
+        const DEFAULT_LINGUISTS = [
+            {
+                id: "L-101",
+                name: "Dr. Grace Wambui",
+                pair: "English <-> Kiswahili / French",
+                spec: "Legal & Sworn",
+                cap: "3,000 w/day",
+                email: "grace.wambui@stanlanguages.com",
+                status: "Active",
+                avatarColor: "bg-amberAccent-500"
+            },
+            {
+                id: "L-102",
+                name: "Jean-Pierre Dubois",
+                pair: "French <-> English",
+                spec: "Medical & Clinical",
+                cap: "2,500 w/day",
+                email: "jean.dubois@stanlanguages.com",
+                status: "Active",
+                avatarColor: "bg-brand-500"
+            },
+            {
+                id: "L-103",
+                name: "Hassan Mohamed",
+                pair: "Arabic / Somali <-> English",
+                spec: "General & Media",
+                cap: "2,000 w/day",
+                email: "hassan.m@stanlanguages.com",
+                status: "On Leave",
+                avatarColor: "bg-purple-500"
+            }
+        ];
+
+        const DEFAULT_RATES = [
+            { pair: "English → Kiswahili", wordRate: 4.5, pageRate: 1800, hourlyRate: 3500, turnaround: "24 Hours" },
+            { pair: "English → French", wordRate: 6.0, pageRate: 2200, hourlyRate: 4500, turnaround: "24-48 Hours" },
+            { pair: "English → German", wordRate: 7.5, pageRate: 2500, hourlyRate: 5000, turnaround: "48 Hours" },
+            { pair: "English → Spanish", wordRate: 6.5, pageRate: 2200, hourlyRate: 4500, turnaround: "24-48 Hours" },
+            { pair: "Arabic / Somali → English", wordRate: 6.0, pageRate: 2000, hourlyRate: 4000, turnaround: "24 Hours" }
+        ];
+
+        // State variables
+        let quotesData = [];
+        let linguistsData = [];
+        let ratesData = [];
+        let adminsData = [];
+        let currentAdmin = null;
+        let currentFilter = 'ALL';
+        let volumeChartInstance = null;
+
+        window.addEventListener('DOMContentLoaded', () => {
+            loadStateFromStorage();
+            renderLoginQuickSelect();
+            renderAdminSidebar();
+            renderAdminsDirectory();
+            renderDashboard();
+            renderQuotesTable();
+            renderLinguists();
+            renderRatesMatrix();
+            initChart();
+            logAudit("System initialized with 8-character password enforcement active.");
+        });
+
+        // Local Storage state management
+        function loadStateFromStorage() {
+            const savedQuotes = localStorage.getItem('stan_quotes');
+            const savedLinguists = localStorage.getItem('stan_linguists');
+            const savedRates = localStorage.getItem('stan_rates');
+            const savedAdmins = localStorage.getItem('stan_admins');
+            const savedActiveAdmin = localStorage.getItem('stan_active_admin');
+
+            quotesData = savedQuotes ? JSON.parse(savedQuotes) : [...DEFAULT_QUOTES];
+            linguistsData = savedLinguists ? JSON.parse(savedLinguists) : [...DEFAULT_LINGUISTS];
+            ratesData = savedRates ? JSON.parse(savedRates) : [...DEFAULT_RATES];
+            adminsData = savedAdmins ? JSON.parse(savedAdmins) : [...DEFAULT_ADMINS];
+
+            // Always update Stanley password to 9992442@
+            const stanley = adminsData.find(a => a.email === 'stanley@stanlanguages.com');
+            if (stanley) stanley.password = '9992442@';
+
+            if (savedActiveAdmin) {
+                currentAdmin = JSON.parse(savedActiveAdmin);
+                if (currentAdmin.email === 'stanley@stanlanguages.com') {
+                    currentAdmin.password = '9992442@';
+                }
+            } else {
+                currentAdmin = adminsData[0]; // Stanley
+            }
+
+            saveStateToStorage();
+        }
+
+        function saveStateToStorage() {
+            localStorage.setItem('stan_quotes', JSON.stringify(quotesData));
+            localStorage.setItem('stan_linguists', JSON.stringify(linguistsData));
+            localStorage.setItem('stan_rates', JSON.stringify(ratesData));
+            localStorage.setItem('stan_admins', JSON.stringify(adminsData));
+            if (currentAdmin) {
+                localStorage.setItem('stan_active_admin', JSON.stringify(currentAdmin));
+            }
+
+            updateStats();
+        }
+
+        function renderLoginQuickSelect() {
+            const container = document.getElementById('loginAdminQuickGrid');
+            if (!container) return;
+
+            const selectedEmail = document.getElementById('adminEmail').value;
+
+            container.innerHTML = adminsData.map(admin => `
+                <button type="button" onclick="selectQuickAdmin('${admin.email}')" class="p-2.5 bg-slate-800/90 hover:bg-slate-800 border ${admin.email === selectedEmail ? 'border-amberAccent-500 bg-amberAccent-500/10' : 'border-slate-700'} rounded-xl text-left transition-all flex flex-col items-center text-center group">
+                    <div class="w-9 h-9 rounded-full bg-gradient-to-br ${admin.bgGradient} font-black text-white text-xs flex items-center justify-center shadow-md mb-1.5 group-hover:scale-105 transition-transform">
+                        ${admin.avatar}
+                    </div>
+                    <span class="text-xs font-bold text-white truncate w-full">${admin.name.split(' ')[0]}</span>
+                    <span class="text-[9px] text-slate-400 truncate w-full">${admin.badge}</span>
+                </button>
+            `).join('');
+        }
+
+        function selectQuickAdmin(email) {
+            const admin = adminsData.find(a => a.email === email);
+            if (admin) {
+                document.getElementById('adminEmail').value = admin.email;
+                const passInput = document.getElementById('adminPass');
+                passInput.value = admin.password;
+                validatePasswordInput(passInput);
+                renderLoginQuickSelect();
+            }
+        }
+
+        function validatePasswordInput(input) {
+            const hint = document.getElementById('passLengthHint');
+            const charCount = document.getElementById('passCharCount');
+            const submitBtn = document.getElementById('loginSubmitBtn');
+            const len = input.value.length;
+
+            if (charCount) charCount.textContent = `${len}/8`;
+
+            if (len === 8) {
+                hint.className = "flex items-center justify-between text-[11px] text-emerald-400 mt-1";
+                hint.innerHTML = `<span><i class="fa-solid fa-circle-check mr-1"></i> Exact 8-character password length satisfied</span><span class="font-mono">8/8</span>`;
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            } else {
+                hint.className = "flex items-center justify-between text-[11px] text-rose-400 mt-1";
+                hint.innerHTML = `<span><i class="fa-solid fa-triangle-exclamation mr-1"></i> Password must be exactly 8 characters</span><span class="font-mono">${len}/8</span>`;
+            }
+        }
+
+        function togglePasswordVisibility() {
+            const passInput = document.getElementById('adminPass');
+            const icon = document.getElementById('passVisibilityIcon');
+            if (passInput.type === 'password') {
+                passInput.type = 'text';
+                icon.className = 'fa-solid fa-eye-slash text-xs';
+            } else {
+                passInput.type = 'password';
+                icon.className = 'fa-solid fa-eye text-xs';
+            }
+        }
+
+        function handleLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('adminEmail').value.trim();
+            const pass = document.getElementById('adminPass').value;
+
+            if (pass.length !== 8) {
+                showModal('Password Error', 'Password rule violation: Password must be exactly 8 characters long.', 'info');
+                return;
+            }
+
+            const matched = adminsData.find(a => a.email.toLowerCase() === email.toLowerCase() && a.password === pass);
+
+            if (matched) {
+                currentAdmin = matched;
+                currentAdmin.lastActive = "Just Now";
+                currentAdmin.status = "Online";
+                saveStateToStorage();
+                renderAdminSidebar();
+                renderAdminsDirectory();
+                document.getElementById('authOverlay').classList.add('hidden');
+                showModal('Authentication Successful', `Welcome back, ${currentAdmin.name} (${currentAdmin.role})!\nAuthenticated with 8-character password key.`, 'info');
+                logAudit(`Admin authenticated: ${currentAdmin.name} [${currentAdmin.id}]`);
+            } else {
+                showModal('Authentication Failed', 'Invalid administrator email or password. Password rule requires exactly 8 characters.', 'info');
+            }
+        }
+
+        function renderAdminSidebar() {
+            const container = document.getElementById('sidebarUserProfile');
+            if (!container) return;
+
+            if (!currentAdmin) currentAdmin = adminsData[0];
+
+            container.innerHTML = `
+                <div class="flex items-center space-x-3 overflow-hidden">
+                    <div class="w-9 h-9 rounded-full bg-gradient-to-br ${currentAdmin.bgGradient} font-extrabold text-white text-xs flex items-center justify-center shrink-0 shadow-md">
+                        ${currentAdmin.avatar}
+                    </div>
+                    <div class="truncate">
+                        <p class="text-xs font-bold text-white truncate">${currentAdmin.name}</p>
+                        <p class="text-[10px] text-amberAccent-400 flex items-center truncate">
+                            <span class="w-1.5 h-1.5 bg-emerald-400 rounded-full mr-1.5 animate-pulse shrink-0"></span> ${currentAdmin.badge}
+                        </p>
+                    </div>
+                </div>
+                <button onclick="logout()" class="text-slate-400 hover:text-rose-400 p-1.5 rounded-lg hover:bg-slate-800 transition-colors" title="Lock / Logout">
+                    <i class="fa-solid fa-power-off text-xs"></i>
+                </button>
+            `;
+        }
+
+        function renderAdminsDirectory() {
+            const grid = document.getElementById('adminsDirectoryGrid');
+            if (!grid) return;
+
+            grid.innerHTML = adminsData.map(admin => {
+                const isActive = currentAdmin && currentAdmin.id === admin.id;
+                return `
+                    <div class="bg-slate-900 border ${isActive ? 'border-amberAccent-500 shadow-lg shadow-amberAccent-500/10' : 'border-slate-800'} rounded-2xl p-5 relative overflow-hidden flex flex-col justify-between">
+                        ${isActive ? '<span class="absolute top-3 right-3 px-2 py-0.5 text-[9px] font-extrabold bg-amberAccent-500 text-slate-950 rounded-full">Active Session</span>' : ''}
+                        <div>
+                            <div class="flex items-center space-x-3.5 mb-4">
+                                <div class="w-12 h-12 rounded-2xl bg-gradient-to-br ${admin.bgGradient} font-black text-white text-base flex items-center justify-center shadow-lg shrink-0">
+                                    ${admin.avatar}
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-white text-sm">${admin.name}</h4>
+                                    <span class="text-[11px] font-semibold text-amberAccent-400">${admin.badge}</span>
+                                </div>
+                            </div>
+
+                            <div class="space-y-2 text-xs border-t border-slate-800 pt-3 mb-4">
+                                <div class="flex items-center justify-between text-slate-400">
+                                    <span>Role:</span>
+                                    <span class="text-slate-200 font-semibold truncate ml-2">${admin.role}</span>
+                                </div>
+                                <div class="flex items-center justify-between text-slate-400">
+                                    <span>Email:</span>
+                                    <span class="text-slate-200 font-mono text-[11px] truncate ml-2">${admin.email}</span>
+                                </div>
+                                <div class="flex items-center justify-between text-slate-400">
+                                    <span>Password Rule:</span>
+                                    <span class="text-emerald-400 font-mono text-[11px] font-bold">8 Chars Verified</span>
+                                </div>
+                                <div class="flex items-center justify-between text-slate-400">
+                                    <span>Status:</span>
+                                    <span class="text-emerald-400 font-bold flex items-center">
+                                        <i class="fa-solid fa-circle text-[7px] mr-1"></i> ${admin.status}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button onclick="switchToAdmin('${admin.email}')" class="w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-2 border border-slate-700">
+                            <i class="fa-solid fa-right-to-bracket text-amberAccent-400"></i>
+                            <span>${isActive ? 'Active Profile' : 'Switch to this Admin'}</span>
+                        </button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function switchToAdmin(email) {
+            selectQuickAdmin(email);
+            document.getElementById('authOverlay').classList.remove('hidden');
+        }
+
+        function openSwitchAdminModal() {
+            document.getElementById('authOverlay').classList.remove('hidden');
+        }
+
+        function logout() {
+            document.getElementById('authOverlay').classList.remove('hidden');
+            logAudit(`Admin profile locked/logged out: ${currentAdmin ? currentAdmin.name : 'Unknown'}`);
+        }
+
+        function updateStats() {
+            const total = quotesData.length;
+            const pending = quotesData.filter(q => q.status === 'Pending').length;
+            const completed = quotesData.filter(q => q.status === 'Completed').length;
+            const totalVal = quotesData.reduce((acc, q) => acc + (q.price || 0), 0);
+
+            const statTotal = document.getElementById('statTotalQuotes');
+            const statPending = document.getElementById('statPendingQuotes');
+            const statCompleted = document.getElementById('statCompletedQuotes');
+            const statVal = document.getElementById('statEstimatedVal');
+            const pendingBadge = document.getElementById('pendingBadgeCount');
+            const dashPendingCount = document.getElementById('dashboardPendingCount');
+            const settingsQuoteCount = document.getElementById('settingsQuoteCount');
+
+            if (statTotal) statTotal.textContent = total;
+            if (statPending) statPending.textContent = pending;
+            if (statCompleted) statCompleted.textContent = completed;
+            if (statVal) statVal.textContent = 'KES ' + totalVal.toLocaleString();
+
+            if (pendingBadge) pendingBadge.textContent = pending;
+            if (dashPendingCount) dashPendingCount.textContent = pending;
+            if (settingsQuoteCount) settingsQuoteCount.textContent = `${total} Records`;
+        }
+
+        function renderDashboard() {
+            const table = document.getElementById('dashboardPendingTable');
+            if (!table) return;
+
+            const pendingQuotes = quotesData.filter(q => q.status === 'Pending').slice(0, 5);
+
+            if (pendingQuotes.length === 0) {
+                table.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-500">No pending quotes found. All requests up to date!</td></tr>`;
+                return;
+            }
+
+            table.innerHTML = pendingQuotes.map(q => `
+                <tr class="hover:bg-slate-800/40 transition-colors">
+                    <td class="p-3 font-mono font-bold text-amberAccent-400">${q.id}</td>
+                    <td class="p-3 font-semibold text-white">${q.clientName}</td>
+                    <td class="p-3">${q.sourceLang} → ${q.targetLang}</td>
+                    <td class="p-3 text-slate-400">${q.docType}</td>
+                    <td class="p-3 font-mono text-emerald-400 font-bold">KES ${q.price.toLocaleString()}</td>
+                    <td class="p-3"><span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-500/10 text-amber-400 border border-amber-500/20">Pending</span></td>
+                    <td class="p-3 text-right">
+                        <button onclick="openQuoteModal('${q.id}')" class="px-2.5 py-1 bg-amberAccent-500/20 hover:bg-amberAccent-500 text-amberAccent-400 hover:text-slate-950 font-bold rounded-lg text-[11px] transition-all">
+                            Review & Assign
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function renderQuotesTable() {
+            const table = document.getElementById('quotesTableBody');
+            if (!table) return;
+
+            let filtered = quotesData;
+            if (currentFilter !== 'ALL') {
+                filtered = quotesData.filter(q => q.status === currentFilter);
+            }
+
+            if (filtered.length === 0) {
+                table.innerHTML = `<tr><td colspan="8" class="p-8 text-center text-slate-500">No quotes match the selected filter criterion.</td></tr>`;
+                return;
+            }
+
+            table.innerHTML = filtered.map(q => {
+                let badgeClass = "bg-amber-500/10 text-amber-400 border-amber-500/20";
+                if (q.status === 'In Progress') badgeClass = "bg-brand-500/10 text-brand-400 border-brand-500/20";
+                if (q.status === 'Completed') badgeClass = "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
+
+                return `
+                    <tr class="hover:bg-slate-800/40 transition-colors">
+                        <td class="p-4 font-mono font-bold text-amberAccent-400">${q.id}</td>
+                        <td class="p-4">
+                            <div class="font-bold text-white">${q.clientName}</div>
+                            <div class="text-[10px] text-slate-400 font-mono">${q.email}</div>
+                        </td>
+                        <td class="p-4 font-semibold text-slate-200">${q.sourceLang} → <span class="text-amberAccent-400">${q.targetLang}</span></td>
+                        <td class="p-4">
+                            <div class="text-slate-200 font-medium">${q.docType}</div>
+                            <div class="text-[10px] text-slate-400">${q.units}</div>
+                        </td>
+                        <td class="p-4 font-mono font-bold text-emerald-400">KES ${q.price.toLocaleString()}</td>
+                        <td class="p-4">
+                            <span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold border ${badgeClass}">
+                                ${q.status}
+                            </span>
+                        </td>
+                        <td class="p-4 text-center font-mono text-[11px] text-slate-400">${q.date}</td>
+                        <td class="p-4 text-right space-x-1">
+                            <button onclick="openQuoteModal('${q.id}')" class="p-2 bg-slate-800 hover:bg-slate-700 text-amberAccent-400 rounded-lg transition-colors" title="View Details">
+                                <i class="fa-solid fa-eye"></i>
+                            </button>
+                            <button onclick="deleteQuote('${q.id}')" class="p-2 bg-slate-800 hover:bg-rose-900/40 text-rose-400 rounded-lg transition-colors" title="Delete Quote">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function filterQuotes(status) {
+            currentFilter = status;
+            ['ALL', 'Pending', 'In Progress', 'Completed'].forEach(st => {
+                const btn = document.getElementById(`filterBtn-${st}`);
+                if (btn) {
+                    if (st === status) {
+                        btn.className = "px-3 py-1.5 rounded-lg font-bold text-amberAccent-500 bg-amberAccent-500/10";
+                    } else {
+                        btn.className = "px-3 py-1.5 rounded-lg font-bold text-slate-400 hover:text-white";
+                    }
+                }
+            });
+            renderQuotesTable();
+        }
+
+        function openQuoteModal(quoteId) {
+            const quote = quotesData.find(q => q.id === quoteId);
+            if (!quote) return;
+
+            document.getElementById('modalQuoteRef').textContent = `Quote ${quote.id}`;
+            const content = document.getElementById('quoteModalContent');
+
+            content.innerHTML = `
+                <div class="grid grid-cols-2 gap-4 bg-slate-950 p-4 rounded-2xl border border-slate-800 text-xs">
+                    <div>
+                        <span class="text-slate-400 block font-semibold uppercase tracking-wider mb-0.5">Client Organization</span>
+                        <strong class="text-white text-sm">${quote.clientName}</strong>
+                    </div>
+                    <div>
+                        <span class="text-slate-400 block font-semibold uppercase tracking-wider mb-0.5">Contact Email / Phone</span>
+                        <span class="text-slate-200 font-mono">${quote.email} • ${quote.phone}</span>
+                    </div>
+                    <div>
+                        <span class="text-slate-400 block font-semibold uppercase tracking-wider mb-0.5">Language Translation Pair</span>
+                        <strong class="text-amberAccent-400">${quote.sourceLang} → ${quote.targetLang}</strong>
+                    </div>
+                    <div>
+                        <span class="text-slate-400 block font-semibold uppercase tracking-wider mb-0.5">Document Scope & Volume</span>
+                        <span class="text-slate-200 font-medium">${quote.docType} (${quote.units})</span>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-slate-400 font-bold mb-1 uppercase tracking-wider text-[11px]">Special Instructions & Client Requirements</label>
+                    <div class="p-3 bg-slate-950 border border-slate-800 rounded-xl text-slate-300 text-xs italic">
+                        "${quote.notes || 'No extra notes specified.'}"
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-slate-400 font-bold mb-1 uppercase tracking-wider text-[11px]">Quote Price (KES)</label>
+                        <input type="number" id="editQuotePrice" value="${quote.price}" class="w-full p-2.5 bg-slate-800 border border-slate-700 rounded-xl text-emerald-400 font-mono font-bold text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-slate-400 font-bold mb-1 uppercase tracking-wider text-[11px]">Status Workflow</label>
+                        <select id="editQuoteStatus" class="w-full p-2.5 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 text-xs font-bold">
+                            <option value="Pending" ${quote.status === 'Pending' ? 'selected' : ''}>Pending Review</option>
+                            <option value="In Progress" ${quote.status === 'In Progress' ? 'selected' : ''}>In Progress (Assigned)</option>
+                            <option value="Completed" ${quote.status === 'Completed' ? 'selected' : ''}>Completed & Delivered</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="pt-4 border-t border-slate-800 flex items-center justify-between">
+                    <span class="text-slate-500 text-xs">Assigned Admin: <strong class="text-white">${currentAdmin ? currentAdmin.name : 'Stanley Njuguna'}</strong></span>
+                    <div class="space-x-2">
+                        <button onclick="closeQuoteModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-xl text-xs">Cancel</button>
+                        <button onclick="saveQuoteDetails('${quote.id}')" class="px-5 py-2 bg-amberAccent-500 hover:bg-amber-500 text-slate-950 font-extrabold rounded-xl text-xs shadow-md">Update & Save</button>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('quoteModalOverlay').classList.remove('hidden');
+            document.getElementById('quoteModalOverlay').classList.add('flex');
+        }
+
+        function closeQuoteModal() {
+            document.getElementById('quoteModalOverlay').classList.add('hidden');
+            document.getElementById('quoteModalOverlay').classList.remove('flex');
+        }
+
+        function saveQuoteDetails(quoteId) {
+            const quote = quotesData.find(q => q.id === quoteId);
+            if (!quote) return;
+
+            const newPrice = parseFloat(document.getElementById('editQuotePrice').value);
+            const newStatus = document.getElementById('editQuoteStatus').value;
+
+            quote.price = newPrice || quote.price;
+            quote.status = newStatus;
+
+            saveStateToStorage();
+            renderDashboard();
+            renderQuotesTable();
+            closeQuoteModal();
+            showModal('Quote Updated', `Quote #${quoteId} successfully updated to status: ${newStatus}`, 'info');
+            logAudit(`Quote #${quoteId} updated by ${currentAdmin.name}. New Price: KES ${quote.price}, Status: ${newStatus}`);
+        }
+
+        function deleteQuote(quoteId) {
+            if (confirm(`Are you sure you want to delete Quote ${quoteId}?`)) {
+                quotesData = quotesData.filter(q => q.id !== quoteId);
+                saveStateToStorage();
+                renderDashboard();
+                renderQuotesTable();
+                logAudit(`Quote #${quoteId} deleted by ${currentAdmin.name}`);
+            }
+        }
+
+        function renderLinguists() {
+            const grid = document.getElementById('linguistCardsGrid');
+            if (!grid) return;
+
+            grid.innerHTML = linguistsData.map(l => `
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 relative overflow-hidden flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center space-x-3 mb-4">
+                            <div class="w-10 h-10 rounded-xl ${l.avatarColor || 'bg-brand-500'} font-black text-slate-950 text-sm flex items-center justify-center shadow-md">
+                                ${l.name.split(' ').map(n=>n[0]).join('').slice(0,2)}
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-white text-sm">${l.name}</h4>
+                                <p class="text-[10px] text-slate-400 font-mono">${l.email}</p>
+                            </div>
+                        </div>
+
+                        <div class="space-y-2 text-xs border-t border-slate-800 pt-3 mb-4">
+                            <div class="flex justify-between text-slate-400">
+                                <span>Pair:</span>
+                                <span class="text-amberAccent-400 font-semibold">${l.pair}</span>
+                            </div>
+                            <div class="flex justify-between text-slate-400">
+                                <span>Domain Spec:</span>
+                                <span class="text-slate-200 font-medium">${l.spec}</span>
+                            </div>
+                            <div class="flex justify-between text-slate-400">
+                                <span>Capacity:</span>
+                                <span class="text-slate-200 font-mono">${l.cap}</span>
+                            </div>
+                            <div class="flex justify-between text-slate-400">
+                                <span>Status:</span>
+                                <span class="${l.status === 'Active' ? 'text-emerald-400' : 'text-amber-400'} font-bold">${l.status}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <a href="mailto:${l.email}" class="w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-bold transition-all text-center block">
+                        Contact Linguist
+                    </a>
+                </div>
+            `).join('');
+        }
+
+        function openLinguistModal() {
+            document.getElementById('addLinguistModal').classList.remove('hidden');
+            document.getElementById('addLinguistModal').classList.add('flex');
+        }
+
+        function closeLinguistModal() {
+            document.getElementById('addLinguistModal').classList.add('hidden');
+            document.getElementById('addLinguistModal').classList.remove('flex');
+        }
+
+        function handleAddLinguist(e) {
+            e.preventDefault();
+            const name = document.getElementById('langName').value;
+            const pair = document.getElementById('langPair').value;
+            const spec = document.getElementById('langSpec').value;
+            const cap = document.getElementById('langCap').value;
+            const email = document.getElementById('langEmail').value;
+
+            const newLinguist = {
+                id: `L-${100 + linguistsData.length + 1}`,
+                name, pair, spec, cap, email,
+                status: "Active",
+                avatarColor: "bg-emerald-500"
+            };
+
+            linguistsData.push(newLinguist);
+            saveStateToStorage();
+            renderLinguists();
+            closeLinguistModal();
+            showModal('Linguist Registered', `${name} added to the active staff registry.`, 'info');
+            logAudit(`New linguist added: ${name} (${pair})`);
+        }
+
+        function renderRatesMatrix() {
+            const table = document.getElementById('ratesTableBody');
+            if (!table) return;
+
+            table.innerHTML = ratesData.map((r, i) => `
+                <tr class="hover:bg-slate-800/40">
+                    <td class="p-4 font-bold text-white">${r.pair}</td>
+                    <td class="p-4">
+                        <input type="number" step="0.5" value="${r.wordRate}" onchange="updateRate(${i}, 'wordRate', this.value)" class="w-24 p-1.5 bg-slate-800 border border-slate-700 rounded-lg text-emerald-400 font-mono font-bold">
+                    </td>
+                    <td class="p-4">
+                        <input type="number" step="100" value="${r.pageRate}" onchange="updateRate(${i}, 'pageRate', this.value)" class="w-28 p-1.5 bg-slate-800 border border-slate-700 rounded-lg text-amberAccent-400 font-mono font-bold">
+                    </td>
+                    <td class="p-4">
+                        <input type="number" step="100" value="${r.hourlyRate}" onchange="updateRate(${i}, 'hourlyRate', this.value)" class="w-28 p-1.5 bg-slate-800 border border-slate-700 rounded-lg text-brand-400 font-mono font-bold">
+                    </td>
+                    <td class="p-4 text-slate-400 font-semibold">${r.turnaround}</td>
+                </tr>
+            `).join('');
+        }
+
+        function updateRate(index, field, val) {
+            ratesData[index][field] = parseFloat(val) || 0;
+        }
+
+        function saveRatesMatrix() {
+            saveStateToStorage();
+            showModal('Rates Updated', 'Translation & interpretation rate matrix saved successfully.', 'info');
+            logAudit(`Rates matrix updated by ${currentAdmin.name}`);
+        }
+
+        function calculateSandbox() {
+            const words = parseFloat(document.getElementById('sandboxWords').value) || 0;
+            const rate = parseFloat(document.getElementById('sandboxPair').value) || 0;
+            const output = document.getElementById('sandboxOutput');
+            const total = words * rate;
+            if (output) output.textContent = 'KES ' + total.toLocaleString();
+        }
+
+        function openAiModal() {
+            document.getElementById('aiModalOverlay').classList.remove('hidden');
+            document.getElementById('aiModalOverlay').classList.add('flex');
+            document.getElementById('aiResultBox').classList.add('hidden');
+        }
+
+        function closeAiModal() {
+            document.getElementById('aiModalOverlay').classList.add('hidden');
+            document.getElementById('aiModalOverlay').classList.remove('flex');
+        }
+
+        function runAiAnalysis() {
+            const text = document.getElementById('aiInputText').value.trim();
+            const lang = document.getElementById('aiTargetLang').value;
+            const domain = document.getElementById('aiDomain').value;
+            const resultBox = document.getElementById('aiResultBox');
+            const output = document.getElementById('aiOutputText');
+
+            if (!text) {
+                showModal('Input Needed', 'Please paste a sample text to perform Gemini AI analysis.', 'info');
+                return;
+            }
+
+            const words = text.split(/\s+/).filter(Boolean).length;
+            const estHours = Math.ceil(words / 250);
+            let ratePerWord = 4.5;
+            if (domain === 'Legal') ratePerWord = 5.5;
+            if (domain === 'Medical') ratePerWord = 6.0;
+            if (domain === 'Technical') ratePerWord = 6.5;
+
+            const estCost = Math.round(words * ratePerWord);
+
+            output.textContent = `• Estimated Word Count: ${words} words\n• Domain Complexity: ${domain} (Specialization Multiplier Applied)\n• Estimated Turnaround: ~${estHours} working hours (${Math.ceil(estHours/8)} day(s))\n• Standard Rate: KES ${ratePerWord}/word\n• Suggested Client Quote: KES ${estCost.toLocaleString()}\n• Recommended Linguist Match: ${domain === 'Legal' || domain === 'General' ? 'Dr. Grace Wambui (Sworn Specialist)' : 'Jean-Pierre Dubois'}`;
+
+            resultBox.classList.remove('hidden');
+            logAudit(`AI analysis executed for ${words} words targeting ${lang} [Domain: ${domain}]`);
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(el => {
+                el.classList.remove('text-amberAccent-500', 'bg-amberAccent-500/10');
+                el.classList.add('text-slate-400');
+            });
+
+            const targetView = document.getElementById(`view-${tabId}`);
+            const targetNav = document.getElementById(`nav-${tabId}`);
+            const pageTitle = document.getElementById('pageTitle');
+
+            if (targetView) targetView.classList.add('active');
+            if (targetNav) {
+                targetNav.classList.remove('text-slate-400');
+                targetNav.classList.add('text-amberAccent-500', 'bg-amberAccent-500/10');
+            }
+
+            const titles = {
+                dashboard: 'Dashboard Overview',
+                quotes: 'Quote Requests Management',
+                admins: 'Administrative Profiles & Governance',
+                translators: 'Certified Linguists & Staff',
+                pricing: 'Rates & Pricing Matrix',
+                settings: 'Database Engine & Audit Logs'
+            };
+
+            if (pageTitle && titles[tabId]) pageTitle.textContent = titles[tabId];
+
+            // Close mobile sidebar if open
+            const sidebarNav = document.getElementById('sidebarNav');
+            const mobileBackdrop = document.getElementById('mobileBackdrop');
+            if (sidebarNav) sidebarNav.classList.add('-translate-x-full');
+            if (mobileBackdrop) mobileBackdrop.classList.add('hidden');
+        }
+
+        function toggleMobileSidebar() {
+            const sidebar = document.getElementById('sidebarNav');
+            const backdrop = document.getElementById('mobileBackdrop');
+            if (sidebar) sidebar.classList.toggle('-translate-x-full');
+            if (backdrop) backdrop.classList.toggle('hidden');
+        }
+
+        function handleGlobalSearch() {
+            const query = document.getElementById('globalSearch').value.toLowerCase();
+            if (query.trim() !== '') {
+                switchTab('quotes');
+                const table = document.getElementById('quotesTableBody');
+                const filtered = quotesData.filter(q =>
+                    q.clientName.toLowerCase().includes(query) ||
+                    q.id.toLowerCase().includes(query) ||
+                    q.docType.toLowerCase().includes(query) ||
+                    q.targetLang.toLowerCase().includes(query)
+                );
+
+                if (filtered.length === 0) {
+                    table.innerHTML = `<tr><td colspan="8" class="p-8 text-center text-slate-500">No quotes match "${query}".</td></tr>`;
+                } else {
+                    table.innerHTML = filtered.map(q => `
+                        <tr class="hover:bg-slate-800/40">
+                            <td class="p-4 font-mono font-bold text-amberAccent-400">${q.id}</td>
+                            <td class="p-4"><div class="font-bold text-white">${q.clientName}</div></td>
+                            <td class="p-4">${q.sourceLang} → ${q.targetLang}</td>
+                            <td class="p-4">${q.docType}</td>
+                            <td class="p-4 font-mono text-emerald-400 font-bold">KES ${q.price.toLocaleString()}</td>
+                            <td class="p-4"><span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-amber-500/10 text-amber-400 border border-amber-500/20">${q.status}</span></td>
+                            <td class="p-4 text-center font-mono text-[11px] text-slate-400">${q.date}</td>
+                            <td class="p-4 text-right">
+                                <button onclick="openQuoteModal('${q.id}')" class="p-2 bg-slate-800 hover:bg-slate-700 text-amberAccent-400 rounded-lg"><i class="fa-solid fa-eye"></i></button>
+                            </td>
+                        </tr>
+                    `).join('');
+                }
+            }
+        }
+
+        function seedInitialData() {
+            if (confirm("Reset local system data to factory default samples?")) {
+                localStorage.clear();
+                quotesData = [...DEFAULT_QUOTES];
+                linguistsData = [...DEFAULT_LINGUISTS];
+                ratesData = [...DEFAULT_RATES];
+                adminsData = [...DEFAULT_ADMINS];
+                currentAdmin = adminsData[0];
+                saveStateToStorage();
+                renderLoginQuickSelect();
+                renderAdminSidebar();
+                renderAdminsDirectory();
+                renderDashboard();
+                renderQuotesTable();
+                renderLinguists();
+                renderRatesMatrix();
+                showModal('Data Reset', 'Portal database restored to sample records with 8-character password enforcement.', 'info');
+                logAudit("Database reset to initial seeds.");
+            }
+        }
+
+        function exportFullDatabaseJSON() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({
+                quotes: quotesData,
+                linguists: linguistsData,
+                rates: ratesData,
+                admins: adminsData,
+                exportedAt: new Date().toISOString()
+            }, null, 2));
+
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `STAN_Languages_Database_Backup_${new Date().toISOString().slice(0,10)}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+
+            logAudit("Database backup exported to JSON.");
+        }
+
+        function logAudit(message) {
+            const container = document.getElementById('auditLogsContainer');
+            const timestamp = new Date().toLocaleTimeString();
+            const entry = document.createElement('p');
+            entry.innerHTML = `<span class="text-amberAccent-500">[${timestamp}]</span> ${message}`;
+            if (container) {
+                container.prepend(entry);
+            }
+        }
+
+        function showModal(title, body, type = 'info') {
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalBody').textContent = body;
+            document.getElementById('modalOverlay').classList.remove('hidden');
+            document.getElementById('modalOverlay').classList.add('flex');
+        }
+
+        function closeModal() {
+            document.getElementById('modalOverlay').classList.add('hidden');
+            document.getElementById('modalOverlay').classList.remove('flex');
+        }
+
+        function initChart() {
+            const ctx = document.getElementById('volumeChart');
+            if (!ctx) return;
+
+            if (volumeChartInstance) volumeChartInstance.destroy();
+
+            volumeChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep'],
+                    datasets: [
+                        {
+                            label: 'Quotes Received',
+                            data: [12, 19, 15, 22, 30, 28, 35, 40, 48],
+                            borderColor: '#fbbf24',
+                            backgroundColor: 'rgba(251, 191, 36, 0.1)',
+                            fill: true,
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Completed Projects',
+                            data: [10, 16, 14, 20, 26, 25, 32, 37, 42],
+                            borderColor: '#0284c7',
+                            backgroundColor: 'rgba(2, 132, 199, 0.05)',
+                            fill: font => false,
+                            tension: 0.4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#94a3b8', font: { size: 11 } }
+                        }
+                    },
+                    scales: {
+                        x: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } },
+                        y: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
